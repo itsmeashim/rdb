@@ -25,6 +25,7 @@ var (
 	limit           int
 	outputJSON      bool
 	separator       string
+	listURLs        bool
 )
 
 var listCmd = &cobra.Command{
@@ -57,6 +58,13 @@ var listCmd = &cobra.Command{
 		results, err := db.List(context.Background(), opts)
 		if err != nil {
 			return fmt.Errorf("failed to query data: %w", err)
+		}
+
+		if listURLs {
+			for _, r := range results {
+				fmt.Fprintln(os.Stdout, r.URL)
+			}
+			return nil
 		}
 
 		if outputJSON {
@@ -112,5 +120,6 @@ func init() {
 	listCmd.Flags().IntVarP(&limit, "limit", "n", 0, "Limit number of results (0 = all)")
 	listCmd.Flags().BoolVarP(&outputJSON, "json", "j", false, "Output as JSON")
 	listCmd.Flags().StringVarP(&separator, "sep", "s", "", "Field separator for piping (e.g., ',' or '|')")
+	listCmd.Flags().BoolVar(&listURLs, "urls", false, "Only output URLs")
 	rootCmd.AddCommand(listCmd)
 }

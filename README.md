@@ -106,6 +106,9 @@ rdb list --program myprogram --json
 
 # Custom separator for piping
 rdb list --sep "," | cut -d',' -f1
+
+# Only list URLs
+rdb list --urls
 ```
 
 #### Filter Options
@@ -128,6 +131,7 @@ rdb list --sep "," | cut -d',' -f1
 | `--limit` | `-n` | all | Limit results |
 | `--json` | `-j` | false | JSON output |
 | `--sep` | `-s` | | Custom separator |
+| `--urls` | | false | Only output URLs |
 
 Valid sort fields: `url`, `input`, `webserver`, `tech`, `program`, `platform`, `created_at`
 

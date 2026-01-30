@@ -95,6 +95,15 @@ rdb list --webserver nginx
 # Filter by technology
 rdb list --tech Cloudflare
 
+# Filter by title
+rdb list --title "admin"
+
+# Filter by DNS A record
+rdb list --a "1.2.3.4"
+
+# Search across common fields (url, input, title, host, webserver, content-type, tech, a, program, platform)
+rdb list -q "wordpress"
+
 # Filter by program
 rdb list --program myprogram --platform hackerone
 
@@ -115,10 +124,21 @@ rdb list --urls
 
 | Flag | Match Type | Description |
 |------|------------|-------------|
+| `--query` / `-q` | partial | Search across common fields |
 | `--url` | partial | Filter by URL |
 | `--input` | partial | Filter by input domain |
+| `--title` | partial | Filter by page title |
+| `--a` | partial | Filter by DNS A record |
 | `--webserver` | partial | Filter by web server |
 | `--tech` | partial | Filter by technology |
+| `--host` | partial | Filter by host |
+| `--scheme` | exact | Filter by scheme (http/https) |
+| `--port` | exact | Filter by port |
+| `--method` | exact | Filter by HTTP method |
+| `--path` | partial | Filter by path |
+| `--location` | partial | Filter by redirect location |
+| `--content-type` | partial | Filter by Content-Type |
+| `--status` | exact | Filter by HTTP status code |
 | `--program` | exact | Filter by program name |
 | `--platform` | exact | Filter by platform name |
 
@@ -133,7 +153,7 @@ rdb list --urls
 | `--sep` | `-s` | | Custom separator |
 | `--urls` | | false | Only output URLs |
 
-Valid sort fields: `url`, `input`, `webserver`, `tech`, `program`, `platform`, `created_at`
+Valid sort fields: `url`, `input`, `title`, `host`, `scheme`, `port`, `method`, `path`, `location`, `content_type`, `status_code`, `content_length`, `words`, `lines`, `webserver`, `tech`, `program`, `platform`, `created_at`
 
 ## Data Model
 

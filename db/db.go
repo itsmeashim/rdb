@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/itsmeashim/rdb/config"
 	"github.com/itsmeashim/rdb/models"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var pool *pgxpool.Pool
@@ -94,15 +94,26 @@ func Insert(ctx context.Context, data *models.HTTPXData) error {
 }
 
 type ListOptions struct {
-	URL       string
-	Input     string
-	Webserver string
-	Tech      string
-	Program   string
-	Platform  string
-	SortBy    string
-	SortOrder string
-	Limit     int
+	Query       string
+	URL         string
+	Input       string
+	Title       string
+	A           string
+	Webserver   string
+	Tech        string
+	Host        string
+	Scheme      string
+	Port        string
+	Method      string
+	Path        string
+	Location    string
+	ContentType string
+	StatusCode  int
+	Program     string
+	Platform    string
+	SortBy      string
+	SortOrder   string
+	Limit       int
 }
 
 func List(ctx context.Context, opts ListOptions) ([]models.HTTPXData, error) {
@@ -112,6 +123,17 @@ func List(ctx context.Context, opts ListOptions) ([]models.HTTPXData, error) {
 		FROM httpx_data WHERE 1=1`
 	args := []interface{}{}
 	argNum := 1
+
+	if opts.Query != "" {
+		// Single "search" term across common fields.
+		ph := fmt.Sprintf("$%d", argNum)
+		query += fmt.Sprintf(
+			" AND (url ILIKE %[1]s OR input ILIKE %[1]s OR title ILIKE %[1]s OR host ILIKE %[1]s OR webserver ILIKE %[1]s OR content_type ILIKE %[1]s OR tech::text ILIKE %[1]s OR a::text ILIKE %[1]s OR program ILIKE %[1]s OR platform ILIKE %[1]s)",
+			ph,
+		)
+		args = append(args, "%"+opts.Query+"%")
+		argNum++
+	}
 
 	if opts.URL != "" {
 		query += fmt.Sprintf(" AND url ILIKE $%d", argNum)
@@ -123,6 +145,17 @@ func List(ctx context.Context, opts ListOptions) ([]models.HTTPXData, error) {
 		args = append(args, "%"+opts.Input+"%")
 		argNum++
 	}
+	if opts.Title != "" {
+		query += fmt.Sprintf(" AND title ILIKE $%d", argNum)
+		args = append(args, "%"+opts.Title+"%")
+		argNum++
+	}
+	if opts.A != "" {
+		// Stored as JSONB array; text-cast works well for partial matches.
+		query += fmt.Sprintf(" AND a::text ILIKE $%d", argNum)
+		args = append(args, "%"+opts.A+"%")
+		argNum++
+	}
 	if opts.Webserver != "" {
 		query += fmt.Sprintf(" AND webserver ILIKE $%d", argNum)
 		args = append(args, "%"+opts.Webserver+"%")
@@ -131,6 +164,46 @@ func List(ctx context.Context, opts ListOptions) ([]models.HTTPXData, error) {
 	if opts.Tech != "" {
 		query += fmt.Sprintf(" AND tech::text ILIKE $%d", argNum)
 		args = append(args, "%"+opts.Tech+"%")
+		argNum++
+	}
+	if opts.Host != "" {
+		query += fmt.Sprintf(" AND host ILIKE $%d", argNum)
+		args = append(args, "%"+opts.Host+"%")
+		argNum++
+	}
+	if opts.Scheme != "" {
+		query += fmt.Sprintf(" AND scheme = $%d", argNum)
+		args = append(args, opts.Scheme)
+		argNum++
+	}
+	if opts.Port != "" {
+		query += fmt.Sprintf(" AND port = $%d", argNum)
+		args = append(args, opts.Port)
+		argNum++
+	}
+	if opts.Method != "" {
+		query += fmt.Sprintf(" AND method = $%d", argNum)
+		args = append(args, opts.Method)
+		argNum++
+	}
+	if opts.Path != "" {
+		query += fmt.Sprintf(" AND path ILIKE $%d", argNum)
+		args = append(args, "%"+opts.Path+"%")
+		argNum++
+	}
+	if opts.Location != "" {
+		query += fmt.Sprintf(" AND location ILIKE $%d", argNum)
+		args = append(args, "%"+opts.Location+"%")
+		argNum++
+	}
+	if opts.ContentType != "" {
+		query += fmt.Sprintf(" AND content_type ILIKE $%d", argNum)
+		args = append(args, "%"+opts.ContentType+"%")
+		argNum++
+	}
+	if opts.StatusCode != 0 {
+		query += fmt.Sprintf(" AND status_code = $%d", argNum)
+		args = append(args, opts.StatusCode)
 		argNum++
 	}
 	if opts.Program != "" {
@@ -145,8 +218,26 @@ func List(ctx context.Context, opts ListOptions) ([]models.HTTPXData, error) {
 	}
 
 	validSortColumns := map[string]bool{
-		"url": true, "input": true, "webserver": true, "tech": true,
-		"program": true, "platform": true, "created_at": true,
+		"port":           true,
+		"url":            true,
+		"input":          true,
+		"title":          true,
+		"scheme":         true,
+		"webserver":      true,
+		"content_type":   true,
+		"method":         true,
+		"host":           true,
+		"path":           true,
+		"location":       true,
+		"a":              true,
+		"tech":           true,
+		"words":          true,
+		"lines":          true,
+		"status_code":    true,
+		"content_length": true,
+		"program":        true,
+		"platform":       true,
+		"created_at":     true,
 	}
 	sortBy := "created_at"
 	if opts.SortBy != "" && validSortColumns[opts.SortBy] {
